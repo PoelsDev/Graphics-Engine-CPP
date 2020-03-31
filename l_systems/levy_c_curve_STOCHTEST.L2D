@@ -1,0 +1,15 @@
+Alphabet = {F}
+
+Draw = {
+        F -> 1
+}
+
+Rules = {
+        F -> "+F--F+":0.5,
+	F -> "-F++F-":0.5
+}
+
+Initiator     = "F"
+Angle         = 45
+StartingAngle = 90
+Iterations    = 15
