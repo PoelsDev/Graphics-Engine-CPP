@@ -5,15 +5,8 @@
 #ifndef ENGINE_LINEUTILS_H
 #define ENGINE_LINEUTILS_H
 
-using namespace std;
-#include "easy_image.h"
-#include <list>
-#include <cmath>
-#include <limits>
-#include <iostream>
-#include "utils.h"
-#include "l_parser.h"
-#include <stack>
+#include "Color.h"
+#include "library.h"
 
 class Point2D {
 public:

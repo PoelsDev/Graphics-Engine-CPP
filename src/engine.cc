@@ -7,8 +7,25 @@
 #include "utils.h"
 #include "l_parser.h"
 #include "3DLineUtils.h"
+#include "zBufferUtils.h"
+#include "Lighting.h"
+
+using namespace utils;
 
 //TODO: comment all new files
+
+void handleFractals(Figures3D& figures){
+    Figures3D newFigures;
+    for(Figure& f: figures){
+        if(f.isFractal){
+            generateFractal(f,newFigures,f.nrIterations,f.fractalScale);
+        } else {
+            newFigures.push_back(f);
+        }
+    }
+
+    figures = newFigures;
+}
 
 img::EasyImage systemL2D(const ini::Configuration& configuration){
     // Used values variables/objects
@@ -42,9 +59,14 @@ img::EasyImage lineDrawing3D(const ini::Configuration& configuration){
     unsigned int size = configuration["General"]["size"].as_int_or_default(256);
     vector<double>bc_rgb = configuration["General"]["backgroundcolor"].as_double_tuple_or_die();
 
-    // Generate lines
+    // Generate figures
     fp.generateFigures();
     Figures3D resultFigs = fp.getFigures3D();
+
+    // Handle fractals
+    handleFractals(resultFigs);
+
+    // Generate lines
     Lines2D lines = transform::doProjection(resultFigs);
 
     // Image creation
@@ -63,13 +85,94 @@ img::EasyImage zBufferedLineDrawing3D(const ini::Configuration& configuration){
     unsigned int size = configuration["General"]["size"].as_int_or_default(256);
     vector<double>bc_rgb = configuration["General"]["backgroundcolor"].as_double_tuple_or_die();
 
-    // Generate lines
+    // Generate figures
     fp.generateFigures();
     Figures3D resultFigs = fp.getFigures3D();
+
+    // Handle fractals
+    handleFractals(resultFigs);
+
+    // Generate lines
     Lines2D lines = transform::doProjection(resultFigs, true);
 
     // Image creation
     img::EasyImage img = draw2DLines(lines, size, bc_rgb, true);
+    std::ofstream fout("l_system_test.bmp", std::ios::binary);
+    fout << img;
+    fout.close();
+    return img;
+}
+
+img::EasyImage zBuffering3D(const ini::Configuration& configuration){
+    // Figures Parser
+    FiguresParser fp = FiguresParser(configuration);
+
+    // Used variables
+    unsigned int size = configuration["General"]["size"].as_int_or_default(256);
+    vector<double>bc_rgb = configuration["General"]["backgroundcolor"].as_double_tuple_or_die();
+
+    // Generate figures
+    fp.generateFigures();
+    Figures3D resultFigs = fp.getFigures3D();
+
+    // Handle fractals
+    handleFractals(resultFigs);
+
+    // Generate lines
+    Lines2D lines = transform::doProjection(resultFigs);
+
+    // Image properties
+    double imageX;
+    double imageY;
+
+    double d;
+
+    double DCx;
+    double DCy;
+    double dx;
+    double dy;
+
+    utils::getImageInfo(lines,size,imageX,imageY,DCx,DCy,dx,dy,d);
+    zBufferUtils::ZBuffer zbuf = zBufferUtils::ZBuffer(roundToInt(imageX),roundToInt(imageY));
+
+
+    // Image creation
+    Color bc;
+    bc.red = bc_rgb[0];
+    bc.green = bc_rgb[1];
+    bc.blue = bc_rgb[2];
+    img::EasyImage img(roundToInt(imageX), roundToInt(imageY), convertColorValue(bc));
+
+    // Triangulate faces
+    for(Figure& fig: resultFigs){
+        vector<Face> newFaces;
+        for(Face& f: fig.faces){
+            vector<Face> triangulatedFaces = triangulate(f);
+            newFaces.insert(newFaces.end(), triangulatedFaces.begin(), triangulatedFaces.end());
+        }
+        fig.faces = newFaces;
+    }
+    
+    // Lighting
+    Lighting::Lights3D lights3D;
+    if(configuration["General"]["type"].as_string_or_die() == "LightedZBuffering"){
+        Lighting::LightsParser lightParser = Lighting::LightsParser(configuration);
+        lightParser.generateLights();
+        lights3D = lightParser.getLights();
+    }
+
+    // Draw
+    for(Figure& fig: resultFigs){
+        for(Face& f: fig.faces){
+            Color lightedColor = fig.color;
+            if(configuration["General"]["type"].as_string_or_die() == "LightedZBuffering"){
+                Lighting::applyAmbientLightings(lightedColor,fig.ambientReflection,lights3D);
+            }
+            img::Color c = convertColorValue(lightedColor);
+            zBufferUtils::draw_zbuf_triag(zbuf,img,fig.points.at(f.point_indexes.at(0)),fig.points.at(f.point_indexes.at(1)), fig.points.at(f.point_indexes.at(2)),d,dx,dy,c);
+        }
+    }
+
     std::ofstream fout("l_system_test.bmp", std::ios::binary);
     fout << img;
     fout.close();
@@ -84,6 +187,8 @@ img::EasyImage generate_image(const ini::Configuration &configuration)
         return lineDrawing3D(configuration);
     } else if(configuration["General"]["type"].as_string_or_die() == "ZBufferedWireframe"){
         return zBufferedLineDrawing3D(configuration);
+    } else if(configuration["General"]["type"].as_string_or_die() == "ZBuffering" || configuration["General"]["type"].as_string_or_die() == "LightedZBuffering"){
+        return zBuffering3D(configuration);
     }
 }
 

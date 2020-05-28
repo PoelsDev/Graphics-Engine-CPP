@@ -5,15 +5,9 @@
 #ifndef ENGINE_3DLINEUTILS_H
 #define ENGINE_3DLINEUTILS_H
 
-using namespace std;
-
-#include "utils.h"
-using namespace utils;
-
-#include <list>
-#include "vector3d.h"
+#include "library.h"
 #include "lineUtils.h"
-#include "ini_configuration.h"
+#include "Color.h"
 
 class Face
 {
@@ -29,6 +23,20 @@ public:
     std::vector<Vector3D> points;
     std::vector<Face> faces;
     Color color;
+
+    // Fractal Variables
+    bool isFractal;
+    double fractalScale;
+    int nrIterations;
+    
+    // Lighting variables
+    Color ambientReflection;
+    Color diffuseReflection;
+    Color specularReflection;
+    
+    double reflectionCoefficient;
+
+    Figure();
 };
 
 typedef std::list<Figure> Figures3D;
@@ -83,9 +91,9 @@ private:
     stack<Vector3D> s_vecU;
     stack<Vector3D> s_location;
 public:
-L3DReplacer(LParser::LSystem3D& l_sys);
-void drawRecursive(Figure& f, string init, int depth);
-void generateFigure(Figure& f);
+    L3DReplacer(LParser::LSystem3D& l_sys);
+    void drawRecursive(Figure& f, string init, int depth);
+    void generateFigure(Figure& f);
 };
 
 #endif //ENGINE_3DLINEUTILS_H

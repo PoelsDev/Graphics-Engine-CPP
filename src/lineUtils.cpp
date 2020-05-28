@@ -3,6 +3,8 @@
 //
 
 #include "lineUtils.h"
+#include "utils.h"
+#include "zBufferUtils.h"
 
 using namespace std;
 using namespace utils;
@@ -32,50 +34,30 @@ ostream operator <<(ostream& os, Line2D line){
 
 
 img::EasyImage draw2DLines(Lines2D &lines, const int size, vector<double>& backgroundColor, bool zBuffer) {
-    double maxX = -std::numeric_limits<double>::infinity();
-    double maxY = -std::numeric_limits<double>::infinity();
-    double minX = std::numeric_limits<double>::infinity();
-    double minY = std::numeric_limits<double>::infinity();
+    double imageX;
+    double imageY;
 
-    double rangeX;
-    double rangeY;
+    double d;
 
+    double DCx;
+    double DCy;
+    double dx;
+    double dy;
 
-
-
-    for (Line2D &line:lines) {
-        maxX = max(max(line.p1.x, line.p2.x), maxX);
-        maxY = max(max(line.p1.y, line.p2.y), maxY);
-        minX = min(min(line.p1.x, line.p2.x), minX);
-        minY = min(min(line.p1.y, line.p2.y), minY);
-    }
-
-    rangeX = fabs(maxX - minX);
-    rangeY = fabs(maxY - minY);
-
-    double imageX = size * (rangeX / max(rangeX, rangeY));
-    double imageY = size * (rangeY / max(rangeX, rangeY));
-
-    // Create ZBuffer on ImageX & ImageY
-    ZBuffer zbuf = ZBuffer(roundToInt(imageX),roundToInt(imageY));
-
-    double d = 0.95 * (imageX / rangeX);
+    utils::getImageInfo(lines,size,imageX,imageY,DCx,DCy,dx,dy,d);
 
     for (Line2D &line:lines) {
         line.p1 *= d;
         line.p2 *= d;
     }
 
-    double DCx = d * ((minX + maxX) / 2);
-    double DCy = d * ((minY + maxY) / 2);
-    double dx = (imageX / 2) - DCx;
-    double dy = (imageY / 2) - DCy;
-
     for (Line2D &line: lines) {
         line.p1 += {dx, dy};
         line.p2 += {dx, dy};
     }
 
+    // Create ZBuffer on ImageX & ImageY
+    zBufferUtils::ZBuffer zbuf = zBufferUtils::ZBuffer(roundToInt(imageX),roundToInt(imageY));
 
     Color bc;
     bc.red = backgroundColor[0];
@@ -87,7 +69,7 @@ img::EasyImage draw2DLines(Lines2D &lines, const int size, vector<double>& backg
         if(!zBuffer){
             img.draw_line(roundToInt(line.p1.x),roundToInt(line.p1.y), roundToInt(line.p2.x), roundToInt(line.p2.y), convertColorValue(line.color));
         } else {
-            draw_zbuf_line(zbuf,img,roundToInt(line.p1.x),roundToInt(line.p1.y),line.z1,roundToInt(line.p2.x),roundToInt(line.p2.y),line.z2, convertColorValue(line.color));
+            zBufferUtils::draw_zbuf_line(zbuf,img,roundToInt(line.p1.x),roundToInt(line.p1.y),line.z1,roundToInt(line.p2.x),roundToInt(line.p2.y),line.z2, convertColorValue(line.color));
         }
     }
 

@@ -246,5 +246,83 @@ namespace solids{
 
         return f;
     }
+
+    Figure createBuckyBall(){
+        Figure ico = pSolids::createIcosahedron();
+        Figure buckyBall = Figure();
+
+        // All new faces
+        for(Face f: ico.faces){
+
+            int index = buckyBall.points.size()-1;
+
+            // Original points
+            Vector3D A = ico.points.at(f.point_indexes.at(0));
+            Vector3D B = ico.points.at(f.point_indexes.at(1));
+            Vector3D C = ico.points.at(f.point_indexes.at(2));
+
+            // new points
+            Vector3D D = A + (B-A)/3;
+            Vector3D E = A/3+2*B/3;
+            Vector3D F = B + (C-B)/3;
+            Vector3D G = B/3+2*C/3;
+            Vector3D H = A/3+2*C/3;
+            Vector3D I = A + (C-A)/3;
+
+            buckyBall.points.insert(buckyBall.points.end(), {D,E,F,G,H,I});
+
+            // New face
+            buckyBall.faces.push_back(Face({index+1,index+2,index+3,index+4,index+5,index+6}));
+        }
+
+        // 12 Pentagons
+        buckyBall.faces.push_back(Face({0,5,12,17,24}));
+        buckyBall.faces.push_back(Face({1,2,89,84,27}));
+        buckyBall.faces.push_back(Face({3,4,8,41,33}));
+        buckyBall.faces.push_back(Face({9,10,14,53,48}));
+        buckyBall.faces.push_back(Face({39,40,44,99,100}));
+        buckyBall.faces.push_back(Face({37,38,94,116,88}));
+        buckyBall.faces.push_back(Face({15,16,71,66,57}));
+        buckyBall.faces.push_back(Face({64,104,103,111,68}));
+        buckyBall.faces.push_back(Face({51,52,56,105,106}));
+        buckyBall.faces.push_back(Face({75,76,80,86,109}));
+        buckyBall.faces.push_back(Face({107,102,108,114,90}));
+        buckyBall.faces.push_back(Face({69,70,22,83,77}));
+
+        return buckyBall;
+    }
+
+    void createMengerSponge(Figure& fig, Figures3D& fractal, const double nrIterations, const double scale){
+        if(nrIterations > 0){
+            for(Vector3D p0: fig.points){
+                // Create new figure and scale
+                Figure frac = fig;
+                Matrix mScale = transform::scaleFigure(1/scale);
+                transform::applyTransformation(frac, mScale);
+
+                // Create translate matrix and move new figure
+                Vector3D scaledP = p0*mScale;
+                Matrix mTransform = transform::translate(p0-scaledP);
+                transform::applyTransformation(frac,mTransform);
+
+                for(Vector3D p1: fig.points){
+                    if((p0.x == p1.x && p0.y == p1.y && p0.z != p1.z) || (p0.x != p1.x && p0.y == p1.y && p0.z == p1.z) || (p0.x == p1.x && p0.y != p1.y && p0.z == p1.z)){
+                        Vector3D middlePoint = Vector3D::point((p0.x+p1.x)/2,(p0.y+p1.y)/2,(p0.z+p1.z)/2);
+                        Figure middleFrac = fig;
+                        Vector3D middleScaledP = middlePoint*mScale;
+                        Matrix middleTransform = transform::translate(middlePoint-middleScaledP);
+                        transform::applyTransformation(middleFrac,mScale);
+                        transform::applyTransformation(middleFrac,middleTransform);
+                        createMengerSponge(middleFrac,fractal,nrIterations-1,scale);
+                    }
+                }
+
+                // Recursive call
+                createMengerSponge(frac,fractal,nrIterations-1,scale);
+            }
+        } else if(nrIterations == 0){
+            fractal.push_back(fig);
+        }
+    }
 }
 

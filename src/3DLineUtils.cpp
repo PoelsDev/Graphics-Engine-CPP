@@ -4,8 +4,13 @@
 
 #include "3DLineUtils.h"
 #include "solids.h"
-#include <algorithm>
-#include <fstream>
+#include "utils.h"
+
+using namespace utils;
+
+Figure::Figure() {
+    Figure::isFractal = false;
+}
 
 namespace transform{
     Matrix scaleFigure(const double scale){
@@ -159,7 +164,8 @@ void FiguresParser::generateFigures() {
 }
 
 Figure FiguresParser::createFigure(int figureNumber) {
-    const vector<string> solids = {"Cube", "Cone", "Cylinder", "Torus", "Sphere", "Tetrahedron", "Octahedron", "Icosahedron", "Dodecahedron"};
+    const vector<string> solids = {"Cube", "Cone", "Cylinder", "Torus", "Sphere", "Tetrahedron", "Octahedron", "Icosahedron", "Dodecahedron", "BuckyBall", "MengerSponge"};
+    const vector<string> fractals = {"FractalCube", "FractalDodecahedron", "FractalIcosahedron", "FractalOctahedron", "FractalTetrahedron", "FractalBuckyBall"};
     string currentFig = "Figure"+std::to_string(figureNumber);
     Figure fig = Figure();
 
@@ -236,14 +242,29 @@ Figure FiguresParser::createFigure(int figureNumber) {
             fig = pSolids::createDodecahedron();
         } else if(type == "Icosahedron"){
             fig = pSolids::createIcosahedron();
+        } else if(type == "MengerSponge"){
+            fig = pSolids::createCube();
+            Figures3D figs;
+            solids::createMengerSponge(fig,figs,config[currentFig]["nrIterations"].as_int_or_die(),3);
+            fig = utils::FiguresToFigure(figs);
+        } else if(type == "BuckyBall"){
+            fig = solids::createBuckyBall();
         }
 
         // Apply Transformation with the combined matrix
         transform::applyTransformation(fig,combinedMatrix);
-
-        // Color
-        vector<double> lineRGB = config[currentFig]["color"].as_double_tuple_or_die();
-        fig.color = Color(lineRGB[0],lineRGB[1],lineRGB[2]);
+        
+        
+        if(config["General"]["type"].as_string_or_die() == "LightedZBuffering") {
+            // Lighting
+            vector<double> ambientReflection = config[currentFig]["ambientReflection"].as_double_tuple_or_die();
+            fig.ambientReflection = Color(ambientReflection[0], ambientReflection[1], ambientReflection[2]);
+        } else {
+            // Color
+            vector<double> lineRGB = config[currentFig]["color"].as_double_tuple_or_die();
+            fig.color = Color(lineRGB[0],lineRGB[1],lineRGB[2]);
+        }
+        
     } else if(config[currentFig]["type"].as_string_or_die() == "3DLSystem"){
         // All used matrices
         Matrix rotateX = transform::rotateX(config[currentFig]["rotateX"].as_double_or_die());
@@ -272,6 +293,53 @@ Figure FiguresParser::createFigure(int figureNumber) {
         // Color
         vector<double> lineRGB = config[currentFig]["color"].as_double_tuple_or_die();
         fig.color = Color(lineRGB[0],lineRGB[1],lineRGB[2]);
+    } else if(find(fractals.begin(),fractals.end(),config[currentFig]["type"].as_string_or_die()) != fractals.end()){
+        // All used matrices
+        Matrix rotateX = transform::rotateX(config[currentFig]["rotateX"].as_double_or_die());
+        Matrix rotateY = transform::rotateY(config[currentFig]["rotateY"].as_double_or_die());
+        Matrix rotateZ = transform::rotateZ(config[currentFig]["rotateZ"].as_double_or_die());
+        Matrix scale = transform::scaleFigure(config[currentFig]["scale"].as_double_or_die());
+        Matrix eye = transform::eyePointTrans(eyepoint);
+        vector<double> transVDouble = config[currentFig]["center"].as_double_tuple_or_die();
+        Vector3D transVect = Vector3D::point(transVDouble[0],transVDouble[1],transVDouble[2]);
+        Matrix translate = transform::translate(transVect);
+
+        // Combined
+        Matrix combinedMatrix = scale * rotateX * rotateY * rotateZ * translate * eye;
+
+        // Get figure
+        string type = config[currentFig]["type"].as_string_or_die();
+        if(type == "FractalCube"){
+            fig = pSolids::createCube();
+        } else if(type == "FractalTetrahedron"){
+            fig = pSolids::createTetrahedron();
+        } else if(type == "FractalOctahedron"){
+            fig = pSolids::createOctahedron();
+        } else if(type == "FractalDodecahedron"){
+            fig = pSolids::createDodecahedron();
+        } else if(type == "FractalIcosahedron"){
+            fig = pSolids::createIcosahedron();
+        } else if(type == "FractalBuckyBall"){
+            fig = solids::createBuckyBall();
+        }
+
+        // Apply Transformation with the combined matrix
+        transform::applyTransformation(fig,combinedMatrix);
+
+        // Get fractal variables for figure
+        fig.isFractal = true;
+        fig.fractalScale = config[currentFig]["fractalScale"].as_double_or_die();
+        fig.nrIterations = config[currentFig]["nrIterations"].as_int_or_die();
+
+        if(config["General"]["type"].as_string_or_die() == "LightedZBuffering") {
+            // Lighting
+            vector<double> ambientReflection = config[currentFig]["ambientReflection"].as_double_tuple_or_die();
+            fig.ambientReflection = Color(ambientReflection[0], ambientReflection[1], ambientReflection[2]);
+        } else {
+            // Color
+            vector<double> lineRGB = config[currentFig]["color"].as_double_tuple_or_die();
+            fig.color = Color(lineRGB[0],lineRGB[1],lineRGB[2]);
+        }
     }
     return fig;
 }

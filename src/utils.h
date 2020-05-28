@@ -5,41 +5,24 @@
 #ifndef ENGINE_UTILS_H
 #define ENGINE_UTILS_H
 
-#include "easy_image.h"
-#include <cmath>
-#include <limits>
-#include <cassert>
+#include "library.h"
+#include "lineUtils.h"
+#include "Color.h"
+#include "3DLineUtils.h"
+
+class Face;
 
 using namespace std;
 
-class Color{
-public:
-    double red;
-    double green;
-    double blue;
-
-    Color(double red, double green, double blue);
-    Color(){}
-};
-
-class ZBuffer: public std::vector<std::vector<double>>
-{
-public:
-    ZBuffer(const int width, const int height);
-};
-
-namespace utils{
+namespace utils {
     int roundToInt(double d);
     std::vector<int> convertColorValues(std::vector<double> initialValues);
     img::Color convertColorValue(Color& c);
     double getRad(double angle);
+    std::vector<Face> triangulate(const Face& face);
+    void getImageInfo(Lines2D& lines, int size, double& imageX, double& imageY, double& DCx, double& DCy, double& dx, double& dy, double& d);
+    void generateFractal(Figure& fig, Figures3D& fractal, const double nrIterations, const double scale);
+    Figure FiguresToFigure(Figures3D& figs);
 }
-
-bool bufferCheck(ZBuffer& zbuf, unsigned int x, unsigned int y, double zValue);
-
-double get1_ZValue(unsigned int i, int a, double z0, double z1);
-
-void draw_zbuf_line(ZBuffer& zbuf, img::EasyImage& img, unsigned int x0, unsigned int y0, double z0, unsigned int x1,
-        unsigned int y1, double z1, const img::Color &color);
 
 #endif //ENGINE_UTILS_H

@@ -22,6 +22,8 @@ namespace solids {
     Figure createCone(const int n, const double h);
     Figure createSphere(const double radius, const int n);
     Figure createTorus(const double r, const double R, const int n, const int m);
+    Figure createBuckyBall();
+    void createMengerSponge(Figure& fig, Figures3D& fractal, const double nrIterations, const double scale);
 }
 
 

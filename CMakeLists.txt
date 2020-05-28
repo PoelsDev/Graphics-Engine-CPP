@@ -29,6 +29,13 @@ set(engine_sources
         src/vector3d.h
         src/solids.cpp
         src/solids.h
+        src/zBufferUtils.h
+        src/zBufferUtils.cpp
+        src/library.h
+        src/Color.cpp
+        src/Color.h
+        src/Lighting.cpp
+        src/Lighting.h
         )
 
 ############################################################
