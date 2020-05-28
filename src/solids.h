@@ -9,6 +9,11 @@
 #include "lineUtils.h"
 #include "utils.h"
 
+/**
+ * @brief namespace used to create platonic solids and return them in a Figure class
+ * The function names describe which solid is created.
+ */
+
 namespace pSolids{
     Figure createTetrahedron();
     Figure createCube();
@@ -16,6 +21,12 @@ namespace pSolids{
     Figure createIcosahedron();
     Figure createDodecahedron();
 }
+
+
+/**
+ * @brief namespace used to create other solids and return them in a Figure class
+ * The function names describe which solid is created.
+ */
 
 namespace solids {
     Figure createCylinder(const int n, const double h);

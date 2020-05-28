@@ -12,7 +12,10 @@
 
 using namespace utils;
 
-//TODO: comment all new files
+/**
+ * @brief handles fractals on figures if needed
+ * @param figures 
+ */
 
 void handleFractals(Figures3D& figures){
     Figures3D newFigures;
@@ -26,6 +29,12 @@ void handleFractals(Figures3D& figures){
 
     figures = newFigures;
 }
+
+/**
+ * @brief function which handles 2D generated images
+ * @param configuration: input from the ini file
+ * @return EasyImage that has to be generated
+ */
 
 img::EasyImage systemL2D(const ini::Configuration& configuration){
     // Used values variables/objects
@@ -50,6 +59,12 @@ img::EasyImage systemL2D(const ini::Configuration& configuration){
     fout.close();
     return img;
 }
+
+/**
+ * @brief function which handles all 3D line drawings
+ * @param configuration: input from the ini file
+ * @return EasyImage that has to be generated
+ */
 
 img::EasyImage lineDrawing3D(const ini::Configuration& configuration){
     // Figures Parser
@@ -77,6 +92,12 @@ img::EasyImage lineDrawing3D(const ini::Configuration& configuration){
     return img;
 }
 
+/**
+ * @brief function which handles all Z-Buffering line drawings (3D)
+ * @param configuration: input from the ini file
+ * @return EasyImage that has to be generated
+ */
+
 img::EasyImage zBufferedLineDrawing3D(const ini::Configuration& configuration){
     // Figures Parser
     FiguresParser fp = FiguresParser(configuration);
@@ -102,6 +123,12 @@ img::EasyImage zBufferedLineDrawing3D(const ini::Configuration& configuration){
     fout.close();
     return img;
 }
+
+/**
+ * @brief function which handles all Z-Buffering line drawings with triangles (3D)
+ * @param configuration: input from the ini file
+ * @return EasyImage that has to be generated
+ */
 
 img::EasyImage zBuffering3D(const ini::Configuration& configuration){
     // Figures Parser
